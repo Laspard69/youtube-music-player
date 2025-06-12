@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>YouTube Music + Lyrics</title>
+  <title>YouTube Music</title>
   <style>
     body {
       background: #111;
@@ -46,31 +46,6 @@
       margin-top: 30px;
     }
 
-    #lyrics-container {
-      margin-top: 30px;
-      max-width: 700px;
-      margin-inline: auto;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 0 15px #0f0f0f;
-    }
-
-    #lyrics-container h2 {
-      color: #ff0;
-      margin-bottom: 10px;
-    }
-
-    #lyrics {
-      text-align: left;
-      max-height: 300px;
-      overflow-y: auto;
-      font-size: 1.1em;
-      line-height: 1.6;
-      white-space: pre-line;
-      color: #ccc;
-    }
-
     @media (max-width: 600px) {
       input {
         width: 90%;
@@ -79,21 +54,13 @@
   </style>
 </head>
 <body>
-  <h1>🎵 YouTube Music + Lyrics</h1>
+  <h1>🎵 YouTube Music</h1>
 
   <input type="text" id="search" placeholder="Search for any song..." />
   <button onclick="searchMusic()">Search</button>
   <button onclick="toggleRepeat()" id="repeat-btn">Repeat: OFF</button>
 
   <div id="results"></div>
-
-  <div id="lyrics-container">
-    <h2>🎤 Lyrics</h2>
-    <div id="lyrics">
-      <p>Search and play a song to see lyrics!</p>
-    </div>
-  </div>
-
   <div id="player"></div>
 
   <script>
@@ -123,7 +90,7 @@
 
         const button = document.createElement('button');
         button.textContent = 'Play';
-        button.onclick = () => playVideo(videoId, title);
+        button.onclick = () => playVideo(videoId);
 
         container.appendChild(titleSpan);
         container.appendChild(button);
@@ -137,7 +104,7 @@
       if (currentVideoId) playVideo(currentVideoId);
     }
 
-    async function playVideo(videoId, title = '') {
+    function playVideo(videoId) {
       currentVideoId = videoId;
       const loopParam = repeatEnabled ? `&loop=1&playlist=${videoId}` : '';
       const player = document.getElementById('player');
@@ -146,26 +113,6 @@
           src="https://www.youtube.com/embed/${videoId}?autoplay=1${loopParam}"
           frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       `;
-
-      let [song, artist] = title.split(' - ');
-      if (!artist) {
-        artist = song = title;
-      }
-
-      song = song.replace(/ *\([^)]*\) */g, '').trim();
-      artist = artist.replace(/ *\([^)]*\) */g, '').trim();
-
-      try {
-        const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
-        const data = await res.json();
-        if (data.lyrics) {
-          document.getElementById('lyrics').innerHTML = `<p>${data.lyrics.replace(/\n/g, '<br>')}</p>`;
-        } else {
-          throw new Error('No lyrics found');
-        }
-      } catch (e) {
-        document.getElementById('lyrics').innerHTML = `<p>⚠️ No lyrics found for <b>${artist} - ${song}</b>.</p>`;
-      }
     }
   </script>
 </body>
