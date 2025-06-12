@@ -1,8 +1,8 @@
 <script>
-  const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // YouTube API key
-
+  const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc';
   let currentVideoId = '';
   let repeatEnabled = false;
+  let lyricTimer = null;
 
   async function searchMusic() {
     const query = document.getElementById('search').value;
@@ -41,10 +41,11 @@
   }
 
   async function playVideo(videoId, title = '') {
+    clearInterval(lyricTimer);
     currentVideoId = videoId;
+
     const loopParam = repeatEnabled ? `&loop=1&playlist=${videoId}` : '';
-    const player = document.getElementById('player');
-    player.innerHTML = `
+    document.getElementById('player').innerHTML = `
       <iframe width="100%" height="400"
         src="https://www.youtube.com/embed/${videoId}?autoplay=1${loopParam}"
         frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
@@ -52,24 +53,36 @@
 
     // Try to guess artist & song from title
     let [song, artist] = title.split(' - ');
-    if (!artist) {
-      artist = song = title;
-    }
+    if (!artist) artist = song = title;
 
-    // Clean up title text
     song = song.replace(/ *\([^)]*\) */g, '').trim();
     artist = artist.replace(/ *\([^)]*\) */g, '').trim();
 
     try {
       const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
       const data = await res.json();
-      if (data.lyrics) {
-        document.getElementById('lyrics').innerHTML = `<p>${data.lyrics.replace(/\n/g, '<br>')}</p>`;
-      } else {
-        throw new Error('No lyrics found');
-      }
+
+      if (!data.lyrics) throw new Error('No lyrics');
+
+      const lines = data.lyrics.split('\n').filter(line => line.trim() !== '');
+      const lyricsEl = document.getElementById('lyrics');
+      let index = 0;
+      lyricsEl.innerHTML = '';
+
+      lyricTimer = setInterval(() => {
+        if (index < lines.length) {
+          const p = document.createElement('p');
+          p.textContent = lines[index];
+          p.className = 'highlight';
+          lyricsEl.appendChild(p);
+          lyricsEl.scrollTop = lyricsEl.scrollHeight;
+          index++;
+        } else {
+          clearInterval(lyricTimer);
+        }
+      }, 2500); // change speed here (2500ms = 2.5s)
     } catch (e) {
-      document.getElementById('lyrics').innerHTML = `<p>⚠️ No lyrics found for <b>${artist} - ${song}</b>.</p>`;
+      document.getElementById('lyrics').innerHTML = `<p>⚠️ Lyrics not found for <b>${artist} - ${song}</b>.</p>`;
     }
   }
 </script>
