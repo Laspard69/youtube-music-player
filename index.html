@@ -71,17 +71,6 @@
       color: #ccc;
     }
 
-    #lyrics p {
-      opacity: 0;
-      animation: fadeIn 1s forwards;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
     @media (max-width: 600px) {
       input {
         width: 90%;
@@ -108,9 +97,7 @@
   <div id="player"></div>
 
   <script>
-    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // YouTube API key
-    const corsProxy = 'https://corsproxy.io/?';
-
+    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc';
     let currentVideoId = '';
     let repeatEnabled = false;
 
@@ -160,40 +147,24 @@
           frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       `;
 
-      const [song, artist] = title.split(' - ').map(s => s?.replace(/\(.*?\)|\[.*?\]/g, '').trim());
-      const lyricsBox = document.getElementById('lyrics');
-      lyricsBox.innerHTML = `<p>Loading lyrics for <b>${artist || ''} - ${song}</b>...</p>`;
+      let [song, artist] = title.split(' - ');
+      if (!artist) {
+        artist = song = title;
+      }
+
+      song = song.replace(/ *\([^)]*\) */g, '').trim();
+      artist = artist.replace(/ *\([^)]*\) */g, '').trim();
 
       try {
-        const searchUrl = corsProxy + `https://www.musixmatch.com/search/${encodeURIComponent(song + ' ' + artist)}`;
-        const searchHtml = await (await fetch(searchUrl)).text();
-
-        const match = searchHtml.match(/\/lyrics\/[^"]+/);
-        if (!match) throw new Error('No lyrics page found');
-
-        const lyricsUrl = corsProxy + `https://www.musixmatch.com${match[0]}`;
-        const lyricsHtml = await (await fetch(lyricsUrl)).text();
-
-        const lyricsMatch = lyricsHtml.match(/"body":"(.*?)","language"/);
-        if (!lyricsMatch) throw new Error('Lyrics not found');
-
-        const rawLyrics = JSON.parse(`"${lyricsMatch[1]}"`);
-        const lines = rawLyrics.split('\\n');
-
-        lyricsBox.innerHTML = '';
-        let i = 0;
-        function showLine() {
-          if (i < lines.length) {
-            const line = document.createElement('p');
-            line.textContent = lines[i];
-            lyricsBox.appendChild(line);
-            i++;
-            setTimeout(showLine, 2000);
-          }
+        const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
+        const data = await res.json();
+        if (data.lyrics) {
+          document.getElementById('lyrics').innerHTML = `<p>${data.lyrics.replace(/\n/g, '<br>')}</p>`;
+        } else {
+          throw new Error('No lyrics found');
         }
-        showLine();
       } catch (e) {
-        lyricsBox.innerHTML = `<p>⚠️ No lyrics found. (${e.message})</p>`;
+        document.getElementById('lyrics').innerHTML = `<p>⚠️ No lyrics found for <b>${artist} - ${song}</b>.</p>`;
       }
     }
   </script>
