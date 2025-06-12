@@ -57,8 +57,12 @@
   <div id="results"></div>
   <div id="player"></div>
 
+  <p style="margin-top: 30px; font-size: 0.9em; color: #ccc;">
+    ℹ️ Note: Background playback may not work on mobile unless you use desktop mode or install this page.
+  </p>
+
   <script>
-    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // Your YouTube API key
+    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // YouTube API key
 
     let currentVideoId = '';
     let repeatEnabled = false;
@@ -99,7 +103,7 @@
       const player = document.getElementById('player');
       player.innerHTML = `
         <iframe width="560" height="315"
-          src="https://www.youtube.com/embed/${videoId}?autoplay=1${loopParam}"
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1${loopParam}"
           frameborder="0"
           allow="autoplay; encrypted-media"
           allowfullscreen></iframe>
