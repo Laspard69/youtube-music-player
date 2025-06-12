@@ -2,26 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>YouTube Song Buttons</title>
+  <title>YouTube Music Player</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>🎶 Click a Song to Play</h1>
-  <div class="song-list">
-    <div class="song">
-      <span>Shape of You - Ed Sheeran</span>
-      <button onclick="playSong('JGwWNGJdvx8')">Play</button>
-    </div>
-    <div class="song">
-      <span>Despacito - Luis Fonsi</span>
-      <button onclick="playSong('kJQP7kiw5Fk')">Play</button>
-    </div>
-    <div class="song">
-      <span>Kesariya - Arijit Singh</span>
-      <button onclick="playSong('BddP6PYo2gs')">Play</button>
-    </div>
-  </div>
+  <h1>🎵 YouTube Music Player</h1>
 
+  <input type="text" id="search" placeholder="Search for a song..." />
+  <button onclick="searchMusic()">Search</button>
+  <button onclick="toggleRepeat()" id="repeat-btn">Repeat: OFF</button>
+
+  <div id="results"></div>
   <div id="player"></div>
 
   <script src="script.js"></script>
