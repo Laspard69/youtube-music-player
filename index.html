@@ -42,10 +42,6 @@
       gap: 10px;
     }
 
-    #player {
-      margin-top: 30px;
-    }
-
     #lyrics-container {
       margin-top: 30px;
       max-width: 700px;
@@ -92,21 +88,24 @@
   <button onclick="toggleRepeat()" id="repeat-btn">Repeat: OFF</button>
 
   <div id="results"></div>
-<div id="lyrics">
-  <h2>🎤 Lyrics</h2>
-  <p>Search and play a song to see lyrics!</p>
-</div>
-<div id="player"></div>
+
+  <!-- Lyrics container ABOVE video -->
+  <div id="lyrics-container">
+    <h2>🎤 Lyrics</h2>
+    <div id="lyrics"><p>Search and play a song to see lyrics!</p></div>
+  </div>
+
+  <div id="player"></div>
 
   <script>
-    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // YouTube API key
-
+    const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc';
     let currentVideoId = '';
     let repeatEnabled = false;
+    let lyricTimer = null;
 
     async function searchMusic() {
-      const query = document.getElementById('search').value;
-      if (!query.trim()) return;
+      const query = document.getElementById('search').value.trim();
+      if (!query) return;
 
       const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=5&q=${encodeURIComponent(query)}&key=${apiKey}`);
       const data = await response.json();
@@ -141,33 +140,51 @@
     }
 
     async function playVideo(videoId, title = '') {
+      clearInterval(lyricTimer); // Stop previous timer
+
       currentVideoId = videoId;
       const loopParam = repeatEnabled ? `&loop=1&playlist=${videoId}` : '';
-      const player = document.getElementById('player');
-      player.innerHTML = `
+      document.getElementById('player').innerHTML = `
         <iframe width="100%" height="400"
           src="https://www.youtube.com/embed/${videoId}?autoplay=1${loopParam}"
           frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       `;
 
-      // Try to guess artist & song from title
-      let [song, artist] = title.split(' - ');
-      if (!artist) {
-        artist = song = title;
+      // Try to get artist and song title from video title
+      let [artist = '', song = ''] = title.split(' - ');
+      if (!song) {
+        song = artist;
+        artist = 'unknown';
       }
 
-      // Clean title text
-      song = song.replace(/ *\([^)]*\) */g, '').trim();
-      artist = artist.replace(/ *\([^)]*\) */g, '').trim();
+      // Clean up
+      artist = artist.replace(/\(.*?\)|\[.*?\]|lyrics|official|video|HD|[\|\-]/gi, '').trim();
+      song = song.replace(/\(.*?\)|\[.*?\]|lyrics|official|video|HD|[\|\-]/gi, '').trim();
 
       try {
         const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
         const data = await res.json();
-        if (data.lyrics) {
-          document.getElementById('lyrics').innerHTML = `<p>${data.lyrics.replace(/\n/g, '<br>')}</p>`;
-        } else {
-          throw new Error('No lyrics found');
-        }
+
+        const lyricsBox = document.getElementById('lyrics');
+        lyricsBox.innerHTML = '';
+
+        if (!data.lyrics) throw new Error();
+
+        const lines = data.lyrics.split('\n').filter(line => line.trim() !== '');
+        let i = 0;
+
+        lyricTimer = setInterval(() => {
+          if (i >= lines.length) {
+            clearInterval(lyricTimer);
+            return;
+          }
+          const line = document.createElement('p');
+          line.textContent = lines[i];
+          line.className = 'highlight';
+          lyricsBox.appendChild(line);
+          lyricsBox.scrollTop = lyricsBox.scrollHeight;
+          i++;
+        }, 2500);
       } catch (e) {
         document.getElementById('lyrics').innerHTML = `<p>⚠️ No lyrics found for <b>${artist} - ${song}</b>.</p>`;
       }
