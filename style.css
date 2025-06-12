@@ -39,3 +39,17 @@ button {
 #player {
   margin-top: 30px;
 }
+
+#lyrics p.highlight {
+  animation: fadeIn 0.5s ease-in;
+  margin: 0;
+  padding: 5px;
+  font-weight: bold;
+  color: #00ffd0;
+  text-shadow: 0 0 5px #fff;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
