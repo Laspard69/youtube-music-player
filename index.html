@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>YouTube Music Player</title>
+  <meta charset="UTF-8" />
+  <title>YouTube Music + Lyrics</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #111;
+      background: #111;
       color: #fff;
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 20px;
     }
 
     input {
-      padding: 10px;
       width: 60%;
+      padding: 10px;
       border-radius: 5px;
       border: none;
-      margin-bottom: 10px;
+      font-size: 1rem;
     }
 
     button {
       padding: 10px 20px;
-      margin: 5px;
-      background: crimson;
+      margin: 10px 5px;
+      background: #e50914;
       color: white;
       border: none;
       border-radius: 5px;
@@ -45,21 +45,61 @@
     #player {
       margin-top: 30px;
     }
+
+    #lyrics-container {
+      margin-top: 30px;
+      max-width: 700px;
+      margin-inline: auto;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 15px #0f0f0f;
+    }
+
+    #lyrics-container h2 {
+      color: #ff0;
+      margin-bottom: 10px;
+    }
+
+    #lyrics {
+      text-align: left;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 1.1em;
+      line-height: 1.6;
+      white-space: pre-line;
+      color: #ccc;
+    }
+
+    #lyrics p.highlight {
+      color: #fff;
+      font-weight: bold;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    @media (max-width: 600px) {
+      input {
+        width: 90%;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>🎵 YouTube Music Player</h1>
+  <h1>🎵 YouTube Music + Lyrics</h1>
 
-  <input type="text" id="search" placeholder="Search for a song..." />
+  <input type="text" id="search" placeholder="Search for any song..." />
   <button onclick="searchMusic()">Search</button>
   <button onclick="toggleRepeat()" id="repeat-btn">Repeat: OFF</button>
 
   <div id="results"></div>
   <div id="player"></div>
 
-  <p style="margin-top: 30px; font-size: 0.9em; color: #ccc;">
-    ℹ️ Note: Background playback may not work on mobile unless you use desktop mode or install this page.
-  </p>
+  <div id="lyrics-container">
+    <h2>🎤 Lyrics</h2>
+    <div id="lyrics">
+      <p>Search and play a song to see lyrics!</p>
+    </div>
+  </div>
 
   <script>
     const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // YouTube API key
@@ -89,7 +129,7 @@
 
         const button = document.createElement('button');
         button.textContent = 'Play';
-        button.onclick = () => playVideo(videoId);
+        button.onclick = () => playVideo(videoId, title);
 
         container.appendChild(titleSpan);
         container.appendChild(button);
@@ -97,24 +137,43 @@
       });
     }
 
-    function playVideo(videoId) {
+    function toggleRepeat() {
+      repeatEnabled = !repeatEnabled;
+      document.getElementById('repeat-btn').textContent = `Repeat: ${repeatEnabled ? 'ON' : 'OFF'}`;
+      if (currentVideoId) playVideo(currentVideoId);
+    }
+
+    async function playVideo(videoId, title = '') {
       currentVideoId = videoId;
       const loopParam = repeatEnabled ? `&loop=1&playlist=${videoId}` : '';
       const player = document.getElementById('player');
       player.innerHTML = `
-        <iframe width="560" height="315"
-          src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1${loopParam}"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          allowfullscreen></iframe>
+        <iframe width="100%" height="400"
+          src="https://www.youtube.com/embed/${videoId}?autoplay=1${loopParam}"
+          frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
       `;
-    }
 
-    function toggleRepeat() {
-      repeatEnabled = !repeatEnabled;
-      const btn = document.getElementById('repeat-btn');
-      btn.textContent = `Repeat: ${repeatEnabled ? 'ON' : 'OFF'}`;
-      if (currentVideoId) playVideo(currentVideoId);
+      // Try to guess artist & song from title
+      let [song, artist] = title.split(' - ');
+      if (!artist) {
+        artist = song = title;
+      }
+
+      // Clean title text
+      song = song.replace(/ *\([^)]*\) */g, '').trim();
+      artist = artist.replace(/ *\([^)]*\) */g, '').trim();
+
+      try {
+        const res = await fetch(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`);
+        const data = await res.json();
+        if (data.lyrics) {
+          document.getElementById('lyrics').innerHTML = `<p>${data.lyrics.replace(/\n/g, '<br>')}</p>`;
+        } else {
+          throw new Error('No lyrics found');
+        }
+      } catch (e) {
+        document.getElementById('lyrics').innerHTML = `<p>⚠️ No lyrics found for <b>${artist} - ${song}</b>.</p>`;
+      }
     }
   </script>
 </body>
