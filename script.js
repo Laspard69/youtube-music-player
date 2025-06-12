@@ -1,4 +1,4 @@
-const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // Replace with your actual API key
+const apiKey = 'AIzaSyANE4GsiQgv1WaWkjBgCOd4Ft4uLCi_qQc'; // Your YouTube Data API key
 
 async function searchMusic() {
   const query = document.getElementById('search').value;
@@ -9,14 +9,36 @@ async function searchMusic() {
   results.innerHTML = '';
 
   data.items.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item.snippet.title;
-    li.onclick = () => playVideo(item.id.videoId);
-    results.appendChild(li);
+    const videoId = item.id.videoId;
+    const title = item.snippet.title;
+
+    // Create a container for each result
+    const container = document.createElement('div');
+    container.className = 'song';
+
+    // Create a title span
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = title;
+
+    // Create a play button
+    const button = document.createElement('button');
+    button.textContent = 'Play';
+    button.onclick = () => playVideo(videoId);
+
+    // Append elements
+    container.appendChild(titleSpan);
+    container.appendChild(button);
+    results.appendChild(container);
   });
 }
 
 function playVideo(videoId) {
   const player = document.getElementById('player');
-  player.innerHTML = `<iframe width="100%" height="400" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+  player.innerHTML = `
+    <iframe width="560" height="315"
+      src="https://www.youtube.com/embed/${videoId}?autoplay=1"
+      frameborder="0"
+      allow="autoplay; encrypted-media"
+      allowfullscreen></iframe>
+  `;
 }
